@@ -1,0 +1,74 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String             @id @default(cuid())
+  name      String             @default("Candidate")
+  createdAt DateTime           @default(now())
+  sessions  InterviewSession[]
+}
+
+model InterviewSession {
+  id            String              @id @default(cuid())
+  userId        String
+  user          User                @relation(fields: [userId], references: [id])
+  mode          String              @default("live") // live | demo
+  interviewType String
+  experience    String
+  style         String
+  difficulty    String              @default("medium")
+  totalQuestions Int
+  candidateJson String
+  jobJson       String
+  planJson      String
+  stateJson     String
+  status        String              @default("in_progress") // in_progress | complete
+  reportJson    String?
+  createdAt     DateTime            @default(now())
+  completedAt   DateTime?
+  questions     InterviewQuestion[]
+  drills        PracticeDrill[]
+}
+
+model InterviewQuestion {
+  id          String             @id @default(cuid())
+  sessionId   String
+  session     InterviewSession   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  index       Int
+  text        String
+  type        String
+  difficulty  String
+  isFollowUp  Boolean            @default(false)
+  answer      String?
+  askedAt     DateTime           @default(now())
+  evaluation  AnswerEvaluation?
+}
+
+model AnswerEvaluation {
+  id                String            @id @default(cuid())
+  questionId        String            @unique
+  question          InterviewQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  technicalAccuracy Int
+  clarity           Int
+  specificity       Int
+  completeness      Int
+  weakAreas         String            // JSON array
+  feedback          String
+  nextAction        String
+}
+
+model PracticeDrill {
+  id         String           @id @default(cuid())
+  sessionId  String
+  session    InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  title      String
+  weakArea   String
+  minutes    Int
+  prompt     String
+}
